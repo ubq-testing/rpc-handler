@@ -16,6 +16,8 @@ const rpcList: { url: string; tracking?: Tracking }[] = [
   { url: "http://127.0.0.1:85", tracking: "none" },
   { url: "http://127.0.0.1:81", tracking: "none" },
   { url: "http://127.0.0.1:8545", tracking: "none" },
+  { url: "http://example.com/rpc.tenderly.co/fork/test1", tracking: "none" },
+  { url: "http://example.com/rpc.tenderly.co/fork/rpc.tenderly.co/fork/", tracking: "none" }
 ];
 
 export const testConfig: HandlerConstructorConfig = {
@@ -203,5 +205,25 @@ describe("RPCHandler", () => {
 
     const provider = await rpcHandler.getFirstAvailableRpcProvider();
     expect(provider).not.toBeNull();
+  });
+
+  describe("RPC exclusions", () => {
+    it("should exclude RPCs with specified search terms", () => {
+      const configWithExclusions: HandlerConstructorConfig = {
+        ...testConfig,
+        exclusions: {
+          searchTerms: ["rpc.tenderly.co/fork/"],
+          overwriteDefaultExcluded: false
+        },
+      };
+
+      const handlerWithExclusions = new RPCHandler(configWithExclusions);
+      const runtimeRpcs = handlerWithExclusions.getRuntimeRpcs();
+      
+      // Ensure that none of the runtime RPCs include excluded terms
+      runtimeRpcs.forEach(rpcUrl => {
+        expect(rpcUrl).not.toMatch(/rpc\.tenderly\.co\/fork\//);
+      });
+    });
   });
 });
