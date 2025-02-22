@@ -55,11 +55,22 @@ export class RPCHandler implements HandlerInterface {
       config.exclusions.searchTerms = [...config.exclusions.searchTerms, ...defaultExcluded];
     }
 
+    // Logging excluded RPCs
+    const initialRpcCount = this._networkRpcs.length;
+
     this._networkRpcs = this._networkRpcs.filter((rpc) => {
       if (config.exclusions) {
-        return !config.exclusions.searchTerms.some((exclusion) => rpc.url.includes(exclusion));
+        return !config.exclusions.searchTerms.some((exclusion) => {
+          const excluded = rpc.url.includes(exclusion);
+          if (excluded) {
+            this.log("info", `[RPCHandler] Excluded RPC: ${rpc.url}`, { exclusion });
+          }
+          return excluded;
+        });
       }
     });
+
+    this.log("info", `[RPCHandler] Initial RPC count: ${initialRpcCount}, Remaining after exclusion: ${this._networkRpcs.length}`);
 
     this._networkName = networkIds[this._networkId];
 
@@ -483,7 +494,7 @@ export class RPCHandler implements HandlerInterface {
 
     if (config.runtimeRpcs && config.runtimeRpcs.length > 0) {
       if (this._networkId === "31337" || this._networkId === "1337") {
-        this._runtimeRpcs = [`${LOCAL_HOST}`, `${LOCAL_HOST_2}`, ...config.runtimeRpcs];
+        this._runtimeRpcs = [`${LOCAL_HOST}", `${LOCAL_HOST_2}", ...config.runtimeRpcs];
       } else if (this._runtimeRpcs?.length > 0) {
         this._runtimeRpcs = [...this._runtimeRpcs, ...config.runtimeRpcs];
       } else {
