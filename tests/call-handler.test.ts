@@ -64,6 +64,26 @@ describe("Call Handler", () => {
       expect(parseInt(blockNumber)).toBeGreaterThan(0);
     }, 15000);
 
+    it("should exclude RPC URLs with specified exclusion terms", () => {
+      const module = require("../types/rpc-handler");
+      const { RPCHandler } = module;
+      
+      const exclusionConfig = {
+        ...testConfig,
+        exclusions: {
+          searchTerms: ["rpc.tenderly.co/fork/"],
+          overwriteDefaultExcluded: true,
+        },
+        networkRpcs: [{ url: "http://safe-rpc-url.com" }, { url: "http://rpc.tenderly.co/fork/some-path" }],
+      };
+    
+      const handler = new RPCHandler(exclusionConfig);
+      const availableRpcs = handler.getNetworkRpcs();
+    
+      expect(availableRpcs.length).toBe(1);
+      expect(availableRpcs[0].url).toBe("http://safe-rpc-url.com");
+    });
+
     it("should get the fastest rpc provider", async () => {
       const module = await import("../types/rpc-handler");
       const handler = new module.RPCHandler({
@@ -228,3 +248,5 @@ describe("Call Handler", () => {
     });
   });
 });
+
+
